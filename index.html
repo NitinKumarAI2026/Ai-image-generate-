@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nitin AI Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #121212; color: white; }
+        .main { background: #1e1e1e; padding: 20px; border-radius: 15px; border: 1px solid #333; }
+        input { width: 80%; padding: 12px; border-radius: 8px; border: none; margin-bottom: 10px; }
+        button { background: #ff4757; color: white; padding: 12px 25px; border: none; border-radius: 8px; font-weight: bold; width: 85%; }
+        #loading { margin-top: 15px; color: #ffa502; display: none; }
+        #pic { margin-top: 20px; width: 100%; border-radius: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <h3>Nitin's AI Studio</h3>
+    <input type="text" id="p" placeholder="Apna idea likho...">
+    <br>
+    <button onclick="draw()">Create Magic</button>
+    <div id="loading">AI kaam kar raha hai... rukna mat!</div>
+    <img id="pic" src="">
+</div>
+
+<script>
+async function draw() {
+    const prompt = document.getElementById("p").value;
+    const pic = document.getElementById("pic");
+    const loader = document.getElementById("loading");
+
+    if(!prompt) return alert("Pehle kuch likho!");
+
+    loader.style.display = "block";
+    pic.style.display = "none";
+
+    try {
+        // Is bar humne Direct API ko hit kiya hai bina kisi proxy ke, taki Chrome confuse na ho
+        const res = await fetch(
+            "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5",
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer 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",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ inputs: prompt })
+            }
+        );
+
+        if (res.status === 503) {
+            loader.innerText = "Model load ho raha hai... 10 sec baad fir dabayein.";
+            return;
+        }
+
+        if (!res.ok) {
+            const err = await res.text();
+            alert("Error code: " + res.status);
+            loader.style.display = "none";
+            return;
+        }
+
+        const data = await res.blob();
+        pic.src = URL.createObjectURL(data);
+        pic.style.display = "block";
+        loader.style.display = "none";
+
+    } catch (e) {
+        // Agar yahan error aata hai to Chrome ki setting ki dikkat hai
+        loader.innerText = "Chrome block kar raha hai! Mobile Data off/on karke try karein.";
+        console.log(e);
+    }
+}
+</script>
+
+</body>
+</html>
